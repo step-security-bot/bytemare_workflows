@@ -1,0 +1,44 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+jobs:
+  Test:
+    strategy:
+      fail-fast: false
+      matrix:
+        go: [ '1.25' ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76
+        with:
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            go.dev:443
+            golang.org:443
+            release-assets.githubusercontent.com:443
+
+      - name: Checkout repo
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+
+      - name: Init go
+        uses: ./init-go
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Run Tests
+        run: cd internal && go test -v -vet=all
